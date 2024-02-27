@@ -59,6 +59,7 @@
 						class="form-control"
 						id="width"
 						placeholder="Enter the width of the window in inches"
+						list="dimensionList"
 						required
 					/>
 				</div>
@@ -69,6 +70,7 @@
 						class="form-control"
 						id="height"
 						placeholder="Enter the height of the window in inches"
+						list="dimensionList"
 						required
 					/>
 				</div>
@@ -81,6 +83,7 @@
 						class="form-control"
 						id="aluminumPrice"
 						placeholder="Enter the price of aluminum per square foot"
+						list="dimensionList"
 						required
 					/>
 				</div>
@@ -93,9 +96,11 @@
 						class="form-control"
 						id="glassPrice"
 						placeholder="Enter the price of glass per square foot"
+						list="dimensionList"
 						required
 					/>
 				</div>
+				<datalist id="dimensionList"></datalist>
 
 				<button type="submit" class="btn btn-primary">Calculate</button>
 			</form>
@@ -176,6 +181,16 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
 		<script>
+			document.addEventListener("DOMContentLoaded", function () {
+				var commonDimensions = [12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72];
+				// This array is used for both width and height
+
+				var dimensionList = document.getElementById("dimensionList");
+				commonDimensions.forEach(function (dimension) {
+					dimensionList.appendChild(new Option(dimension));
+				});
+			});
+
 			document
 				.getElementById("reset-all")
 				.addEventListener("click", function () {
