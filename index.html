@@ -49,7 +49,7 @@
 				</div>
 			</div>
 		</nav>
-		<div class="container p-3 my-4">
+		<div class="container p-3 my-4 card shadow-sm rounded bg-light">
 			<h2 class="text-center mb-3">Window Calculator</h2>
 			<form id="windowForm">
 				<div class="form-group mb-3">
@@ -100,7 +100,7 @@
 				<button type="submit" class="btn btn-primary">Calculate</button>
 			</form>
 			<div id="resultsContainer" class="mt-3 d-none">
-				<table class="table table-bordered">
+				<table class="table table-bordered table-striped table-hover">
 					<thead>
 						<tr>
 							<th scope="col">Description</th>
@@ -122,23 +122,124 @@
 						</tr>
 					</tbody>
 				</table>
+				<div class="my-3">
+					<button id="downloadPdf" class="btn btn-success">
+						Download PDF
+					</button>
+					<button id="previewPdf" class="btn btn-secondary ms-2">
+						Preview PDF
+					</button>
+				</div>
 			</div>
 		</div>
+		<div
+			class="modal fade"
+			id="pdfPreviewModal"
+			tabindex="-1"
+			aria-labelledby="pdfPreviewModalLabel"
+			aria-hidden="true"
+		>
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="pdfPreviewModalLabel">
+							PDF Preview
+						</h5>
+						<button
+							type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="Close"
+						></button>
+					</div>
+					<div class="modal-body">
+						<iframe
+							id="pdfPreview"
+							style="width: 100%; height: 500px"
+							frameborder="0"
+						></iframe>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 		<script
 			src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
 			integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
 			crossorigin="anonymous"
 		></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
 		<script>
+			function generatePDFDocument() {
+				var doc = new jspdf.jsPDF();
+
+				// Title for the PDF
+				doc.setFont("helvetica", "bold");
+				doc.setFontSize(18);
+				doc.text("Window Info", 15, 20);
+
+				// Create a table
+				var tableElement = document.getElementById("resultsContainer");
+				var head = [["Description", "Amount"]];
+				var body = [];
+
+				// Extract data from the table
+				tableElement
+					.querySelectorAll("tbody tr")
+					.forEach(function (row) {
+						var rowData = [];
+						row.querySelectorAll("td").forEach(function (cell) {
+							rowData.push(cell.innerText);
+						});
+						body.push(rowData);
+					});
+
+				// Adding table to the PDF
+				doc.autoTable({
+					head: head,
+					body: body,
+					startY: 30,
+					theme: "grid",
+					styles: { font: "helvetica", fontSize: 12 },
+					headStyles: { fillColor: [22, 160, 133] }, // Style for table header
+					margin: { top: 30 },
+				});
+
+				return doc;
+			}
+
+			function downloadPDF() {
+				var doc = generatePDFDocument();
+				doc.save("window_info.pdf");
+			}
+
+			function showPDFInModal() {
+				var doc = generatePDFDocument();
+				var pdfData = doc.output("datauristring");
+				document.getElementById("pdfPreview").src = pdfData;
+
+				// Open the modal
+				var myModal = new bootstrap.Modal(
+					document.getElementById("pdfPreviewModal")
+				);
+				myModal.show();
+			}
+
+			// Event listeners
+			document
+				.getElementById("downloadPdf")
+				.addEventListener("click", downloadPDF);
+			document
+				.getElementById("previewPdf")
+				.addEventListener("click", showPDFInModal);
+
 			document
 				.getElementById("windowForm")
 				.addEventListener("submit", function (e) {
 					e.preventDefault();
-					var resultsContainer =
-						document.getElementById("resultsContainer");
-					resultsContainer.classList.remove("d-none");
 
 					// Fetching user input
 					var width = parseFloat(
@@ -157,13 +258,21 @@
 					// Basic validation
 					if (
 						isNaN(width) ||
+						width <= 0 ||
 						isNaN(height) ||
+						height <= 0 ||
 						isNaN(aluminumPrice) ||
-						isNaN(glassPrice)
+						aluminumPrice < 0 ||
+						isNaN(glassPrice) ||
+						glassPrice < 0
 					) {
-						alert("Please enter valid numbers in all fields.");
+						alert(
+							"Please enter valid, positive numbers in all fields."
+						);
 						return;
 					}
+
+					// Further validations can be added here
 
 					// Calculating area and perimeter
 					var area = (width * height) / 144; // area in square feet
@@ -177,15 +286,18 @@
 					// Calculating costs
 					var totalAluminumPrice = aluminumUsed * aluminumPrice;
 					var totalGlassPrice = glassUsed * glassPrice;
-
 					var totalPrice = totalAluminumPrice + totalGlassPrice;
 
+					// Displaying results
+					var resultsContainer =
+						document.getElementById("resultsContainer");
 					document.getElementById("resultPrice").innerHTML =
 						"Rs. " + totalPrice.toFixed(2);
 					document.getElementById("aluminumUsed").innerHTML =
 						aluminumUsed.toFixed(2) + " sq. ft";
 					document.getElementById("glassUsed").innerHTML =
 						glassUsed.toFixed(2) + " sq. ft";
+					resultsContainer.classList.remove("d-none");
 				});
 		</script>
 	</body>
